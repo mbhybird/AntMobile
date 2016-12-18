@@ -128,7 +128,7 @@ let MyOrder = React.createClass({
     },
     rejectOrder(orderNo, rejectReason){
         if (rejectReason == '') {
-            alert('请输入拒经理由!');
+            alert('请输入拒绝理由!');
             return;
         }
         let profile = localStorage.user != null ? JSON.parse(localStorage.user) : {};
