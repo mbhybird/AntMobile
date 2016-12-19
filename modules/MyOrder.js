@@ -189,7 +189,7 @@ let MyOrder = React.createClass({
                         {obj.status == 4 ?
                             <Item>
                                 <Flex>
-                                    <Button type="primary" onClick={()=>{this.rejectOrder(obj.order_no,this.state.rejectReason)}}>拒经完成</Button>
+                                    <Button type="primary" onClick={()=>{this.rejectOrder(obj.order_no,this.state.rejectReason)}}>拒绝完成</Button>
                                     <PlaceHolder/>
                                     <Button type="primary" onClick={()=>{this.completeOrder(obj.order_no)}}>确认完成</Button>
                                 </Flex>
