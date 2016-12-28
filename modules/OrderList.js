@@ -2,9 +2,10 @@
  * Created by NickChung on 11/27/16.
  */
 import React from 'react';
-import { List,Button,Flex,Icon,Tag } from 'antd-mobile';
+import { List,Button,Flex,Icon,Tag,Badge } from 'antd-mobile';
 const Repo = require("./Repo.js");
 
+const Item = List.Item;
 var pageIndex = 0;
 
 let OrderList = React.createClass({
@@ -76,14 +77,15 @@ const OrderListContent = React.createClass({
                     >
                     <div style={{ display: '-webkit-box', display: 'flex' }}>
                         <div style={{ display: 'inline-block' }}>
-                            <p>{index + 1}. {Repo.getOrderTypeDesc(item.order_type)} {item.remark ? '（' + item.remark + '）' : ''}</p>
-                            <p>起点：{item.start_position}</p>
-                            <p>终点：{item.end_position}</p>
-                            <p>金额：{item.amount}</p>
-                            <p><span style={{ fontSize: '1.1em', color: '#FF6E27' }}>状态：{Repo.getOrderStateDesc(item.status)}</span></p>
+                            <Item>{index + 1}.{Repo.getOrderTypeDesc(item.order_type)}</Item>
+                            <Item wrap>备注：{item.remark}</Item>
+                            {/*<p>起点：{item.start_position}</p>*/}
+                            {/*<p>终点：{item.end_position}</p>*/}
+                            {/*<p>金额：{item.amount}</p>*/}
+                            <Item><span style={{ fontSize: '1.1em', color: '#FF6E27' }}>状态：{Repo.getOrderStateDesc(item.status)}</span></Item>
                             {item.driver_phone ?
-                                <p><img src="http://112.74.129.174/gvpark/icon_phone.png"/><span dangerouslySetInnerHTML={Repo.telMarkup(item.driver_phone)}/></p> : ''}
-                            {item.is_user_comment == 1 ? <p style={{color:'orange'}}><Icon type="smile"/>已评分</p> : <p style={{color:'green'}}><Icon type="frown"/>未评分</p>}
+                                <Item><img src="http://112.74.129.174/gvpark/icon_phone.png"/><span dangerouslySetInnerHTML={Repo.telMarkup(item.driver_phone)}/></Item> : ''}
+                            <Item>{item.is_user_comment == 1 ? <span style={{color:'orange'}}><Icon type="smile"/>已评分</span> : <span style={{color:'green'}}><Icon type="frown"/>未评分</span>}</Item>
                         </div>
                     </div>
                 </div>
@@ -97,12 +99,12 @@ const OrderListContent = React.createClass({
                         <Button type="warning" onClick={this.loadMore} style={{margin:2}}>查询更多</Button>
                         <Button type="warning" onClick={this.refresh} style={{margin:2}}>刷新</Button>
                     </Flex>
-                }
+                    }
                     renderFooter={() =>
-                        <Flex>
+                        {/*<Flex>
                             <Flex.Item><PlaceHolder/></Flex.Item>
-                        </Flex>
-                }>
+                        </Flex>*/}
+                    }>
                     {this.state.dataSource.map((item, index) => {
                         return (<List.Item key={index}
                                            thumb="http://112.74.129.174/gvpark/icon_route.png"
@@ -113,7 +115,14 @@ const OrderListContent = React.createClass({
         }
         else {
             return (
-                <List renderHeader={''} renderFooter={''}>
+                <List
+                    renderHeader={() =>
+                    <Flex>
+                        <Button type="warning" onClick={this.loadMore} style={{margin:2}}>查询更多</Button>
+                        <Button type="warning" onClick={this.refresh} style={{margin:2}}>刷新</Button>
+                    </Flex>
+                    }
+                    renderFooter={''}>
                     <List.Item>{this.state.loading ? '查询中...' : '没有订单'}</List.Item>
                 </List>
             );

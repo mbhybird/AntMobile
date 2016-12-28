@@ -2,7 +2,7 @@
  * Created by NickChung on 11/27/16.
  */
 import React from 'react';
-import { List, InputItem, Switch, Stepper, Slider, Button, Flex, Popup, Icon, WingBlank, WhiteSpace, Card, Modal } from 'antd-mobile';
+import { List, InputItem, Switch, Stepper, Slider, Button, Flex, Popup, Icon, WingBlank, WhiteSpace, Card, Modal,Picker } from 'antd-mobile';
 import { createForm } from 'rc-form';
 const Repo = require("./Repo.js");
 
@@ -44,10 +44,14 @@ let Login = React.createClass({
     },
     onUserSignUp(){
         let formVal = this.props.form.getFieldsValue();
+        if(!formVal.signup_phone_prefix) {
+            alert('请选择区号！');
+            return;
+        }
         if (formVal.signup_phone) {
             let phone = formVal.signup_phone;
-            if ((phone.length == 8 || phone.length == 11) && phone.match(/^\d.*$/)) {
-                let prefix = phone.length > 8 ? 2 : 1;
+            let prefix = parseInt(formVal.signup_phone_prefix);
+            if ((phone.length >=6 && phone.length <= 11) && phone.match(/^\d.*$/)) {
                 Repo.UserSignUp({
                     prefix: prefix,
                     phone: phone,
@@ -74,10 +78,14 @@ let Login = React.createClass({
     },
     onSubmit() {
         let formVal = this.props.form.getFieldsValue();
+        if(!formVal.phone_prefix) {
+            alert('请选择区号！');
+            return;
+        }
         if (formVal.phone) {
             let phone = formVal.phone;
-            if ((phone.length == 8 || phone.length == 11) && phone.match(/^\d.*$/)) {
-                let prefix = phone.length > 8 ? 2 : 1;
+            let prefix = parseInt(formVal.phone_prefix);
+            if ((phone.length >= 6 && phone.length <= 11) && phone.match(/^\d.*$/)) {
                 Repo.UserSignIn({
                     prefix: prefix,
                     phone: phone,
@@ -104,10 +112,14 @@ let Login = React.createClass({
     },
     onSendVerification() {
         let formVal = this.props.form.getFieldsValue();
+        if(!formVal.phone_prefix) {
+            alert('请选择区号！');
+            return;
+        }
         if (formVal.phone) {
             let phone = formVal.phone;
-            if ((phone.length == 8 || phone.length == 11) && phone.match(/^\d.*$/)) {
-                let prefix = phone.length > 8 ? 2 : 1;
+            let prefix = parseInt(formVal.phone_prefix);
+            if ((phone.length >= 6 && phone.length <= 11) && phone.match(/^\d.*$/)) {
                 Repo.VerificationSignIn({prefix: prefix, phone: phone}, (res)=> {
                     if (res.code == '101') {
                         alert('验证码已发送!');
@@ -127,10 +139,14 @@ let Login = React.createClass({
     },
     onSignUpSendVerification() {
         let formVal = this.props.form.getFieldsValue();
+        if(!formVal.signup_phone_prefix) {
+            alert('请选择区号！');
+            return;
+        }
         if (formVal.signup_phone) {
             let phone = formVal.signup_phone;
-            if ((phone.length == 8 || phone.length == 11) && phone.match(/^\d.*$/)) {
-                let prefix = phone.length > 8 ? 2 : 1;
+            let prefix = parseInt(formVal.signup_phone_prefix);
+            if ((phone.length >= 6 && phone.length <= 11) && phone.match(/^\d.*$/)) {
                 Repo.VerificationSignUp({prefix: prefix, phone: phone}, (res)=> {
                     if (res.code == '101') {
                         alert('验证码已发送!');
@@ -152,10 +168,10 @@ let Login = React.createClass({
         this.props.form.resetFields();
     },
     validateAccount(rule, value, callback) {
-        if (value && (value.length == 8 || value.length == 11) && value.match(/^\d.*$/) ) {
+        if (value && (value.length >= 6 && value.length <= 11) && value.match(/^\d.*$/) ) {
             callback();
         } else {
-            callback(new Error('手机号为8位或11位数字'));
+            callback(new Error('手机号为6-11位数字'));
         }
     },
     render() {
@@ -169,6 +185,10 @@ let Login = React.createClass({
                         <img src="http://112.74.129.174/gvpark/icon_logo.png" style={{margin:5}}/>
                     <PlaceHolder/>
                 </Flex>
+                <Picker data={[{value:1,label:'澳门'},{value:2,label:'大陆'},{value:3,label:'香港'},{value:4,label:'台湾'}]}
+                        cols={1} {...getFieldProps('phone_prefix')} className="forss">
+                    <List.Item arrow="horizontal">区号</List.Item>
+                </Picker>
                 <InputItem
                     {...getFieldProps('phone', {
                         rules: [
@@ -216,9 +236,11 @@ let Login = React.createClass({
                         <Brief>条款4...</Brief>
                         <Brief>条款5...</Brief>
                         <Brief>条款6...</Brief>
-                        <Brief>条款7...</Brief>
-                        <Brief>条款8...</Brief>
                     </Item>
+                    <Picker data={[{value:1,label:'澳门'},{value:2,label:'大陆'},{value:3,label:'香港'},{value:4,label:'台湾'}]}
+                            cols={1} {...getFieldProps('signup_phone_prefix')} className="forss">
+                        <List.Item arrow="horizontal">区号</List.Item>
+                    </Picker>
                     <InputItem
                         {...getFieldProps('signup_phone', {
                             rules: [

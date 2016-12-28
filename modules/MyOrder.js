@@ -162,11 +162,11 @@ let MyOrder = React.createClass({
                     <List renderHeader={''} renderFooter={''}>
                         {/*<Item>订单编号：{obj.order_no}</Item>*/}
                         <Item>订单类型：{Repo.getOrderTypeDesc(obj.order_type)}</Item>
-                        <Item>订单备注：{obj.remark}</Item>
-                        <Item>出发地点：{obj.start_position}</Item>
-                        <Item>目的地点：{obj.end_position}</Item>
+                        <Item wrap>订单备注：{obj.remark}</Item>
+                        {/*<Item>出发地点：{obj.start_position}</Item>*/}
+                        {/*<Item>目的地点：{obj.end_position}</Item>*/}
                         <Item>下单时间：{obj.start_date}</Item>
-                        <Item>交易金额：{obj.amount}</Item>
+                        {/*<Item>交易金额：{obj.amount}</Item>*/}
                         {obj.status != 1 && obj.status != 2 ? <Item>接单时间：{obj.accept_date} </Item> : ''}
                         {obj.status == 2 ? <Item>订单取消时间：{obj.cancel_date} </Item> : ''}
                         {obj.status == 4 ? <Item>申请完成时间：{obj.apply_completedate} </Item> : ''}

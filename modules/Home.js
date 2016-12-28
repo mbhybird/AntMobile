@@ -2,7 +2,7 @@
  * Created by NickChung on 11/27/16.
  */
 import React from 'react';
-import { Drawer, List, NavBar, TabBar, Tabs, WhiteSpace, Popover, Icon,Button,WingBlank,Popup,Badge,Radio } from 'antd-mobile';
+import { Drawer, List, NavBar, TabBar, Tabs, WhiteSpace, Popover, Icon,Button,WingBlank,Popup,Badge,Radio,SegmentedControl,Flex } from 'antd-mobile';
 import Profile from './Profile';
 import OrderList from './OrderList';
 import MyOrder from './MyOrder';
@@ -23,6 +23,18 @@ if (isIPhone) {
 
 const RadioItem = Radio.RadioItem;
 const Item = Popover.Item;
+const PlaceHolder = (props) => (
+    <div style={{
+    backgroundColor: '#ffffff',
+    color: '#ffffff',
+    textAlign: 'center',
+    height: '0.6rem',
+    lineHeight: '0.6rem',
+    width: '10%'
+  }} {...props}
+        ></div>
+);
+
 let Home = React.createClass({
     render() {
         return (
@@ -41,7 +53,6 @@ const BottomTabBar = React.createClass({
         };
     },
     changeSelectedTab(key){
-
         this.setState({
             selectedTab: key
         });
@@ -180,13 +191,13 @@ const HomeDrawer = React.createClass({
     onOpenChange(isOpen) {
         console.log(isOpen, arguments);
         this.setState({ open: !this.state.open });
+        selectedIndex = 1;
     },
     onLeftMenuSelect(key){
         let newTab = key.replace('menu_','');
         this.setState({
             open: false
         });
-        sessionStorage.clear();
         this.refs.btb.changeSelectedTab(newTab);
     },
     render() {
@@ -272,15 +283,29 @@ function callback(key) {
     console.log(key);
 }
 
+var selectedIndex = 1;
+
 const ServiceTab = React.createClass({
-    createOrder(serviceType){
+    getInitialState(){
+        return {
+            priceInfo:{}
+        }
+    },
+    componentWillMount(){
+        Repo.DriverPrice(res=> {
+            if (res.data && res.data.list[0]) {
+                this.setState({priceInfo: res.data.list[0]});
+            }
+        });
+    },
+    createOrder(){
         let profile = localStorage.user != null ? JSON.parse(localStorage.user) : {};
         if(profile.code && profile.token) {
             if (sessionStorage.beginLocation && sessionStorage.endLocation) {
                 let beginLoc = JSON.parse(sessionStorage.beginLocation);
                 let endLoc = JSON.parse(sessionStorage.endLocation);
                 Repo.CreateOrder(profile.code, profile.token, {
-                    order_type: serviceType,
+                    order_type: selectedIndex,
                     start_position: beginLoc.title,
                     start_longitude: beginLoc.lng + '',
                     start_latitude: beginLoc.lat + '',
@@ -308,7 +333,7 @@ const ServiceTab = React.createClass({
                 });
             }
             else {
-                alert('请设置出发地和目的地！');
+                alert('请拖动大头针设置出发地！');
             }
         }
         else {
@@ -368,9 +393,85 @@ const ServiceTab = React.createClass({
             </List>
         </div>, { animationType: 'slide-up', wrapProps, maskClosable: false });
     },
+    showPrice(){
+        let pInfo = this.state.priceInfo;
+        Popup.show(<div>
+            <List renderHeader={() => (
+                <div style={{ position: 'relative' }}>
+                  服务价格清单
+                  <span
+                    style={{
+                      position: 'absolute', right: 3, top: -5
+                    }}
+                    onClick={() => this.onClose()}
+                  >
+                    <Icon type="cross" />
+                  </span>
+                </div>)}
+                  className="popup-list"
+                >
+                {selectedIndex == 1 ?
+                    <List.Item wrap>
+                        代驾：{pInfo.drive_remark}
+                    </List.Item> : ''
+                }
+                {selectedIndex == 2 ?
+                    <List.Item wrap>
+                        代泊：{pInfo.park_remark}
+                    </List.Item> : ''
+                }
+                {selectedIndex == 3 ?
+                    <List.Item wrap>
+                        代送：{pInfo.carry_remark}
+                    </List.Item> : ''
+                }
+                <List.Item>
+                    <Flex>
+                        <Button type="primary" onClick={()=>{this.onClose();this.createOrder();}}><Icon type="check"/>确定</Button>
+                        <PlaceHolder/>
+                        <Button type="primary" onClick={this.onClose}><Icon type="cross"/>取消</Button>
+                    </Flex>
+                </List.Item>
+            </List>
+        </div>, { animationType: 'slide-up', wrapProps, maskClosable: false });
+    },
+    onSegmentChange(e) {
+        selectedIndex = e.nativeEvent.selectedSegmentIndex + 1;
+        this.refs.pMap.updateLocation(selectedIndex);
+    },
+    onSegmentValueChange(value) {
+        console.log(value);
+    },
     render() {
+        var queryStr = location.search.match(new RegExp("[\?\&]m=([^\&]+)","i"));
+        var model = null;
+        if(queryStr !== null && queryStr.length >= 1){
+            model = queryStr[1];
+        }
+        var minusHeight = 0;
+        if(model) {
+            switch (model) {
+                case '5':
+                case '5s':
+                case 'se':
+                    minusHeight = 260;
+                    break;
+
+                case '6':
+                case '6s':
+                case '7':
+                    minusHeight = 280;
+                    break;
+
+                case '6p':
+                case '6sp':
+                case '7p':
+                    minusHeight = 410;
+                    break;
+            }
+        }
         var UA = window.navigator.userAgent;//120
-        let mapHeight = document.documentElement.clientHeight-(UA.indexOf('Android')>=0 ? 500 : 220);
+        let mapHeight = document.documentElement.clientHeight-(UA.indexOf('Android')>=0 ? 420 : minusHeight);
         //let inputWidth = (UA.indexOf('Android')>=0 ? '300px' : '100px');
         //let inputDivHeight = (UA.indexOf('Android')>=0 ? 120 : 20);
         //var rawBeginHtml = {
@@ -385,7 +486,7 @@ const ServiceTab = React.createClass({
         //</div>
         return (
             <div>
-                <Tabs defaultActiveKey="1" onChange={callback} swipeable={false}>
+                {/*<Tabs defaultActiveKey="1" onChange={callback} swipeable={false}>
                     <TabPane tab="代驾" key="1">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: mapHeight }}>
                             <Map id="proxydrive" type={Repo.SERVICE_TYPE.ProxyDrive} ref={"pdMap"}/>
@@ -401,16 +502,48 @@ const ServiceTab = React.createClass({
                         <Button type="warning" onClick={()=>{this.createOrder(Repo.SERVICE_TYPE.ProxyPark)}}><Icon type="check-circle-o"/>呼叫代泊</Button>
                     </TabPane>
                     <TabPane tab="代送" key="3">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: mapHeight }}>
+                        <<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: mapHeight }}>
                              <Map id="proxytransfer" type={Repo.SERVICE_TYPE.ProxyTransfer} ref={"ptMap"}/>
                         </div>
-                        <Button type="warning" onClick={()=>{this.setPoint(this.refs.ptMap)}}><Icon type="environment-o"/>设置出发地和目的地</Button>
+                        Button type="warning" onClick={()=>{this.setPoint(this.refs.ptMap)}}><Icon type="environment-o"/>设置出发地和目的地</Button>
                         <Button type="warning" onClick={()=>{this.createOrder(Repo.SERVICE_TYPE.ProxyTransfer)}}><Icon type="check-circle-o"/>呼叫代送</Button>
                     </TabPane>
-                </Tabs>
+                </Tabs>*/}
+                <WingBlank size="sm">
+                    <WhiteSpace size="sm" />
+                    <SegmentedControl
+                        values={['代驾', '代泊', '代送']}
+                        onChange={this.onSegmentChange}
+                        onValueChange={this.onSegmentValueChange}
+                        />
+                    <WhiteSpace size="sm" />
+                </WingBlank>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: mapHeight }}>
+                    <Map id="proxy" type={selectedIndex} ref={"pMap"}/>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 20 }}>
+                    <Button type="warning" onClick={this.showPrice}><Icon type="check-circle-o"/>呼叫</Button>
+                </div>
             </div>
         );
     }
 });
 
 module.exports = Home;
+
+/*{
+    "code": "105",
+    "data": {
+    "list": [
+        {
+            "carry_price": 100.25,
+            "carry_remark": "澳门岛市区内50mop，其它100mop",
+            "drive_price": 80,
+            "drive_remark": "澳门岛市区内50mop，其它100mop",
+            "id": 1,
+            "park_price": 25,
+            "park_remark": "澳门岛市区内50mop，其它100mop"
+        }
+    ]
+}
+}*/

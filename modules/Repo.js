@@ -29,7 +29,8 @@ const URL=({
     CompleteOrder: 'http://120.25.150.132/gvparkpark/order/complete',
     CommentOrder: 'http://120.25.150.132/gvparkpark/order/comment',
     RejectOrder: 'http://120.25.150.132/gvparkpark/order/rejectcomplete',
-    CancelOrder: 'http://120.25.150.132/gvparkpark/order/cancel'
+    CancelOrder: 'http://120.25.150.132/gvparkpark/order/cancel',
+    DriverPrice: 'http://120.25.150.132/gvparkpark/driverprice/query'
 });
 
 const ORDER_TYPE=({
@@ -337,5 +338,8 @@ module.exports = ({
         };
 
         postURL(URL.RejectOrder, data, callback);
+    },
+    DriverPrice: (callback)=> {
+        postURL(URL.DriverPrice, {}, callback);
     }
 });
