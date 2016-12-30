@@ -57,11 +57,14 @@ const BottomTabBar = React.createClass({
             selectedTab: key
         });
     },
+    updateLocation(){
+        this.refs.st.updateLocation();
+    },
     renderTabContent(tab){
         var placeHolder = null;
         switch(tab){
             case 'call_service':
-                placeHolder = <ServiceTab changeTab={this.changeSelectedTab} {...this.props}/>;
+                placeHolder = <ServiceTab changeTab={this.changeSelectedTab} {...this.props} ref={'st'}/>;
                 break;
             case 'cur_order':
                 placeHolder = <MyOrder {...this.props}/>;
@@ -190,8 +193,11 @@ const HomeDrawer = React.createClass({
     },
     onOpenChange(isOpen) {
         console.log(isOpen, arguments);
-        this.setState({ open: !this.state.open });
-        selectedIndex = 1;
+        this.setState({open: !this.state.open});
+        if (selectedIndex != 1) {
+            selectedIndex = 1;
+            this.refs.btb.updateLocation();
+        }
     },
     onLeftMenuSelect(key){
         let newTab = key.replace('menu_','');
@@ -344,6 +350,7 @@ const ServiceTab = React.createClass({
     onClose() {
         Popup.hide();
     },
+    /*
     getLocationList(locationType,list){
         var s = [];
         list.forEach(item => {
@@ -392,7 +399,7 @@ const ServiceTab = React.createClass({
                 <List.Item><Button type="warning" onClick={this.locationConfirm}><Icon type="smile"/>确定</Button></List.Item>
             </List>
         </div>, { animationType: 'slide-up', wrapProps, maskClosable: false });
-    },
+    },*/
     showPrice(){
         let pInfo = this.state.priceInfo;
         Popup.show(<div>
@@ -439,6 +446,9 @@ const ServiceTab = React.createClass({
         selectedIndex = e.nativeEvent.selectedSegmentIndex + 1;
         this.refs.pMap.updateLocation(selectedIndex);
     },
+    updateLocation(){
+        this.refs.pMap.updateLocation(selectedIndex);
+    },
     onSegmentValueChange(value) {
         console.log(value);
     },
@@ -447,6 +457,16 @@ const ServiceTab = React.createClass({
         var model = null;
         if(queryStr !== null && queryStr.length >= 1){
             model = queryStr[1];
+        }
+        let clientHeight = document.documentElement.clientHeight;
+        if (clientHeight < 1000) {
+            model = '5';
+        }
+        else if (clientHeight < 1800) {
+            model = '6';
+        }
+        else {
+            model = '6p'
         }
         var minusHeight = 0;
         if(model) {
@@ -471,7 +491,7 @@ const ServiceTab = React.createClass({
             }
         }
         var UA = window.navigator.userAgent;//120
-        let mapHeight = document.documentElement.clientHeight-(UA.indexOf('Android')>=0 ? 420 : minusHeight);
+        let mapHeight = clientHeight-(UA.indexOf('Android')>=0 ? 420 : minusHeight);
         //let inputWidth = (UA.indexOf('Android')>=0 ? '300px' : '100px');
         //let inputDivHeight = (UA.indexOf('Android')>=0 ? 120 : 20);
         //var rawBeginHtml = {

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <title>澳門泊車</title>
+
+    <style type="text/css">
+        html {
+            height: 100%
+        }
+
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0
+        }
+
+        #container {
+            height: 100%
+        }
+    </style>
+
+    <style type="text/css">
+        .parkInfo {
+            background-color: #434D52;
+            opacity: 0.7;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+        }
+
+        .parkInfo div {
+            color: white;
+            text-align: center
+        }
+
+        .moto_icon, .car_icon {
+            width: 20px;
+            height: 10px;
+        }
+    </style>
+
+    <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
+    <script src="http://api.map.baidu.com/api?v=2.0&ak=UAMZe3IlVVmcADnrXr9u5XOCXgcezg5W"></script>
+    <script src="//cdn.jsdelivr.net/ramda/latest/ramda.min.js"></script>
+
+    <script type="text/javascript">
+
+        var currentPoint;
+
+        function mapInit() {
+            createMap(113.562716, 22.192258);
+            configMap();
+            addMapControl();
+
+            getParksInfo(function () {
+                updateParkInfoCallBack();
+
+                addAllParksMarker();
+            });
+        }
+
+        function sortByDistance(arr) {
+            var sort = function (park1, park2) {
+                return park1.distance(currentPoint) - park2.distance(currentPoint);
+            };
+
+            return R.sort(sort, arr);
+        }
+
+        function updateParkInfoCallBack() {
+            if ("undefined" === typeof parkQueue) {
+                return;
+            }
+
+            var sortedArray = sortByDistance(parkQueue);
+
+            updateParkInfo(sortedArray);
+        }
+
+        function addAllParksMarker() {
+            for (var i = 0; i < parkQueue.length; i++) {
+                var park = parkQueue[i];
+                var lng = park.longitude;
+                var lat = park.latitude;
+                var point = new BMap.Point(lng, lat);
+                var marker = new BMap.Marker(point);
+                marker.park = park;
+                map.addOverlay(marker);
+
+                var labelOffset = new BMap.Size(0, -20);
+                var label = new BMap.Label(park.name, {offset: labelOffset});
+
+                marker.setLabel(label);
+
+                marker.addEventListener("click", function (event) {
+                    makerClickHandler(this.park);
+                });
+            }
+        }
+
+        function makerClickHandler(park) {
+            var parkInfoDetailDiv = $("#parkInfoDetail");
+
+            if (parkInfoDetailDiv.length === 0) {
+                var parkInfoDetailControl = new ParkInfoDetailControl(park);
+                map.addControl(parkInfoDetailControl);
+            }
+
+            updateParkInfoDetail(park)
+        }
+
+        function addParkInfoDetail() {
+            var pd = new ParkInfoDetailControl();
+            map.addControl(pd);
+        }
+
+        function updateParkInfo(parkArray) {
+            var parkInfo = $(".parkInfo");
+
+            var arr = $.makeArray($(".parkInfo"));
+
+            for (var i = 0; i < arr.length; i++) {
+                var divElement = arr[i];
+
+                var child = divElement.children;
+
+                var name = child[0];
+                var distance = child[1];
+                var car = child[2].children[1];
+                var motobike = child[3].children[1];
+
+                var park = parkArray[i];
+
+                divElement.park = park;
+
+                if (typeof park !== 'undefined') {
+                    name.innerText = park.name;
+                    var displayDistance = parseInt(park.distance());
+                    distance.innerText = displayDistance + "m";
+                    motobike.innerText = park.motoCount;
+                    car.innerText = park.carCount;
+                }
+            }
+        }
+
+        var selectedPark;
+
+        function updateParkInfoDetail(park) {
+            var parkInfo = $("#parkInfoDetail");
+            var parkchild = parkInfo.get(0).children;
+
+            var name = parkchild[0];
+            var car = parkchild[1].children[1];
+            var motobike = parkchild[2].children[1];
+            var address = parkchild[3].children[0];
+            var route = parkchild[4].children[0];
+
+            name.innerText = park.name;
+            var subAddress = park.address;
+            if (subAddress.length >= 12) {
+                subAddress = subAddress.substring(0, 12);
+            }
+            address.innerText = subAddress;
+            motobike.innerText = park.motoCount;
+            car.innerText = park.carCount;
+            route.innerText = "路线"
+
+            selectedPark = park;
+        }
+
+        function createMap(lng, lat) {
+            var point = new BMap.Point(lng, lat);
+            var map = new BMap.Map("container");
+            map.centerAndZoom(point, 17);
+            window.map = map
+        }
+
+        function configMap() {
+            map.minZoom = 14;
+            map.maxZoom = 20;
+            map.enableScrollWheelZoom();
+        }
+
+        function addMapControl() {
+            var navi_opts =
+            {
+                type: BMAP_NAVIGATION_CONTROL_LARGE,
+                anchor: BMAP_ANCHOR_BOTTOM_RIGHT
+            };
+
+            map.addControl(new BMap.NavigationControl(navi_opts));
+
+            var geo_opts =
+            {
+                anchor: BMAP_ANCHOR_BOTTOM_LEFT,
+                enableAutoLocation: true,
+                showAddressBar: true
+            };
+
+            var geo = new BMap.GeolocationControl(geo_opts);
+
+            map.addControl(geo);
+
+            geo.addEventListener("locationSuccess", function (event) {
+                currentPoint = event.point;
+
+                map.setCenter(currentPoint);
+                map.setZoom(18);
+
+                updateParkInfoCallBack();
+
+            });
+
+            geo.addEventListener("locationError", function (event) {
+                alert("定位失败，请打开GPS权限");
+            });
+
+            window.geo = geo;
+
+            var h = $(window).height();
+
+            var count = 5;
+
+            if (h < 600) {
+                count = 4;
+            }
+
+            for (var i = 0; i < count; i++) {
+                var parkInfoControl = new ParkInfoControl();
+
+                parkInfoControl.defaultOffset = new BMap.Size(10, 85 * i);
+
+                map.addControl(parkInfoControl);
+            }
+
+            for (var i = 0; i < count; i++) {
+                var arr = $.makeArray($(".parkInfo"));
+                var divElement = arr[i];
+                divElement.id = i;
+            }
+        }
+
+        //侧边栏停车场信息
+        function ParkInfoControl(park) {
+            this.defaultAnchor = BMAP_ANCHOR_TOP_RIGHT;
+            this.defaultOffset = new BMap.Size(10, 10);
+            this.park = park
+        }
+
+        ParkInfoControl.prototype = new BMap.Control();
+        ParkInfoControl.prototype.initialize = function (map1) {
+            var $div = $("<div class='parkInfo'><div class='name'>name</div><div class='distance'>distance</div><div><img class='moto_icon' src='http://202.175.23.84/images/car_icon.png'><span class='car' style='margin-left: 0.5em'>car</span></div><div><img class='car_icon' src='http://202.175.23.84/images/motor_icon.png'><span class='moto' style='margin-left: 0.5em'>moto</span></div></div>");
+
+            $div.click(function (event) {
+                var park = this.park;
+                var point = new BMap.Point(park.longitude, park.latitude);
+                map.panTo(point);
+
+                makerClickHandler(park);
+            });
+
+            var mapSize = map.getSize();
+            var width = mapSize.width / 4.5;
+
+            $div.css({
+                "width": width
+            });
+
+            var div = $div.get(0);
+
+            map1.getContainer().appendChild(div);
+
+            return div;
+        };
+
+        //停车场详细信息控件
+        function ParkInfoDetailControl(park) {
+            this.defaultAnchor = BMAP_ANCHOR_BOTTOM_LEFT;
+
+            var mapSize = map.getSize();
+            var width = mapSize.width;
+            var height = mapSize.height;
+
+            this.defaultOffset = new BMap.Size(width / 6, height / 20);
+            this.park = park;
+        }
+
+
+        var drivingRoute;
+
+        ParkInfoDetailControl.prototype = new BMap.Control();
+        ParkInfoDetailControl.prototype.initialize = function (map1) {
+            var $div = $("<div id='parkInfoDetail'><div><span class='name'>name</span><span class='distance'>distance</span></div><div><img class='moto_icon' src='http://202.175.23.84/images/car_icon.png'><span class='car' style='margin-left: 1em'>car</span></div><div><img class='car_icon' src='http://202.175.23.84/images/motor_icon.png'><span class='moto' style='margin-left: 1em'>moto</span></div><div class = 'address'><span>address</span></div><div class='route'><span>route</span></div></div>");
+
+            var width = $(window).width();
+            var height = $(window).height();
+
+            var detail_width = width * 4 / 6;
+            var detail_height = height / 5;
+
+            if (detail_height >= 120) {
+                detail_height = 120;
+            }
+
+            $div.css({
+                "width": detail_width,
+                "height": detail_height,
+                "color": "white",
+                "background-color": "#434D52",
+                "opacity": "0.7",
+                "border-radius": "10px",
+                "margin-left": "auto",
+                "margin-right": "auto"
+            });
+
+            $div.find("*").css({
+                "text-align": "center"
+            });
+
+            $div.find(".route").css({
+                "border-style": "solid",
+                "border-width": "2px",
+                "background-color": "#357AEF"
+            });
+
+            var div = $div.get(0);
+
+            map1.getContainer().appendChild(div);
+
+            //路线
+            $(".route").bind('click', function () {
+
+                var parkPoint = new BMap.Point(selectedPark.longitude, selectedPark.latitude);
+
+                var start = currentPoint;
+
+                var end = parkPoint;
+
+                if ("undefined" == typeof drivingRoute) {
+                    drivingRoute = new BMap.DrivingRoute(map, {renderOptions: {'map': map}});
+                }
+                else {
+                    drivingRoute.clearResults();
+                }
+
+                drivingRoute.search(start, end);
+
+                drivingRoute.setSearchCompleteCallback(function (results) {
+
+                    var r = results;
+
+                    var s = r;
+
+                });
+
+            });
+
+            return div;
+        };
+
+        var parkQueue = [];
+
+        function getParksInfo(callback) {
+            //var url = "http://192.168.2.108:9999/gvcarpark/parkingshow/list"
+            var url = "http://120.25.150.132/gvcarpark/parkingshow/list";
+            $.getJSON(url, function (data) {
+                $.each(data, function (key, val) {
+                    if (key === "data") {
+                        var parkInfoList = val.list;
+
+                        if (parkQueue.length > 0) {
+                            parkQueue = [];
+                        }
+                        parkInfoList.map(function (parkInfo) {
+                            parkQueue.push(new Park(parkInfo));
+                        });
+
+                        if (typeof callback !== 'undefined') {
+                            callback()
+                        }
+                    }
+                });
+            })
+        }
+
+        //停车场对象
+        function Park(parkInfo) {
+            this.id = parkInfo.park_id;
+            this.name = parkInfo.park_name;
+            this.tel = parkInfo.park_tel;
+
+            if (parkInfo.park_car_count < 0 && parkInfo.park_moto_count < 0) {
+                this.carCount = "该停车场暂停更新";
+                this.motoCount = "该停车场暂停更新";
+            }
+            else if (parkInfo.park_car_count >= 0 && parkInfo.park_moto_count >= 0) {
+                this.carCount = parkInfo.park_car_count;
+                this.motoCount = parkInfo.park_moto_count;
+            }
+            else {
+                this.carCount = parkInfo.park_car_count;
+                this.motoCount = "-";
+            }
+
+            this.longitude = parkInfo.park_x;
+            this.latitude = parkInfo.park_y;
+            this.address = parkInfo.park_address;
+            this.time = parkInfo.time;
+
+            //计算当前位置与停车场的距离
+            this.distance = function (point) {
+                var parkPoint = new BMap.Point(this.latitude, this.longitude);
+
+                if (typeof point === 'undefined') {
+                    point = new BMap.Point(22.194307, 113.55373);
+                }
+
+                return map.getDistance(point, parkPoint)
+            }
+        }
+
+        $(function () {
+            mapInit();
+
+            setInterval("runloop()", 10 * 1000);
+
+            //开始定位
+            setTimeout(function () {
+                var geo = window.geo;
+
+                geo.location();
+
+            }, 1000);
+
+        });
+
+        function runloop() {
+            var callback = function () {
+                updateParkInfoCallBack()
+            };
+
+            getParksInfo(callback);
+        }
+
+    </script>
+
+</head>
+
+<body>
+
+<div id="container"></div>
+
+</body>
+
+</html>
