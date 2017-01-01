@@ -17,6 +17,33 @@ function postURL(url, data, callback) {
     });
 }
 
+function getIPLocation(callback) {
+    $.ajax(
+        {
+            url: 'http://api.map.baidu.com/location/ip',
+            data: {
+                coor: 'bd09ll',
+                ak: 'Ef8TxBy4vKujFnhsIPUGVCQ1LI5G2dQj'
+            },
+            type: 'get',
+            dataType: 'jsonp',
+            async: true,
+            success: function (data) {
+                let point = data.content.point;
+                callback({
+                    point: {
+                        lng: point.x,
+                        lat: point.y
+                    }
+                });
+            },
+            error: function (data) {
+                alert(JSON.stringify(data));
+            }
+        }
+    );
+}
+
 const URL=({
     VerificationSignUp: 'http://120.25.150.132/gvparkpark/verification/sms/signup',
     VerificationSignIn: 'http://120.25.150.132/gvparkpark/verification/sms/signin',
@@ -341,5 +368,8 @@ module.exports = ({
     },
     DriverPrice: (callback)=> {
         postURL(URL.DriverPrice, {}, callback);
+    },
+    CurrentLocation:(callback)=> {
+        getIPLocation(callback);
     }
 });

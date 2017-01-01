@@ -44,109 +44,78 @@ var Map = React.createClass({
         this.updateLocation(this.props.type);
     },
     updateLocation(orderType){
-        var carIcon = new BMap.Icon("http://112.74.129.174/gvpark/icon_car.png", new BMap.Size(64, 64));
-        var flagIcon = new BMap.Icon("http://112.74.129.174/gvpark/icon_pin2.png", new BMap.Size(64, 64));
-
+        var _this = this;
+        let carIcon = new BMap.Icon("http://112.74.129.174/gvpark/icon_car.png", new BMap.Size(64, 64));
+        let flagIcon = new BMap.Icon("http://112.74.129.174/gvpark/icon_pin2.png", new BMap.Size(64, 64));
+        if (map) {
+            map.clearOverlays();
+        }
+        if (mapIntervalId) {
+            clearInterval(mapIntervalId);
+        }
         map = new BMap.Map(this.state.id);
-        var navigationControl = new BMap.NavigationControl({
-            anchor: BMAP_ANCHOR_TOP_LEFT,
-            type: BMAP_NAVIGATION_CONTROL_LARGE,
-            enableGeolocation: true
-        });
-        map.addControl(navigationControl);
-        var geolocationControl = new BMap.GeolocationControl({
-            anchor: BMAP_ANCHOR_TOP_RIGHT,
-            enableAutoLocation: true,
-            showAddressBar: true
-        });
-        geolocationControl.addEventListener("locationSuccess", function (r) {
-            if (map) {
-                map.clearOverlays();
-            }
-            if (mapIntervalId) {
-                clearInterval(mapIntervalId);
-            }
+        function ZoomControl(){
+            this.defaultAnchor = BMAP_ANCHOR_TOP_LEFT;
+            this.defaultOffset = new BMap.Size(10, 10);
+        }
 
-            map.setCenter(r.point);
-            map.setZoom(18);
+        ZoomControl.prototype = new BMap.Control();
+        ZoomControl.prototype.initialize = function (map) {
+            var divIn = document.createElement("div");
+            divIn.appendChild(document.createTextNode("＋"));
+            divIn.style.cursor = "pointer";
+            divIn.style.border = "1px solid gray";
+            divIn.style.fontSize = "60px";
+            divIn.style.backgroundColor = "white";
+            divIn.onclick = function (e) {
+                if (map.getZoom() < 20) {
+                    map.setZoom(map.getZoom() + 1);
+                }
+            };
 
-            var lblUser = new BMap.Label("所在位置", {offset: new BMap.Size(20, -10)});
-            let mkUser = new BMap.Marker(r.point, {icon: flagIcon});
-            let geoc = new BMap.Geocoder();
-            geoc.getLocation(r.point, function (rs) {
-                let addComp = rs.addressComponents;
-                let address = addComp.province + "," + addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
-                let title = addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
-                sessionStorage.beginLocation = JSON.stringify({
-                    title: title,
-                    address: address,
-                    lng: r.point.lng,
-                    lat: r.point.lat
-                });
-                sessionStorage.endLocation = JSON.stringify({
-                    title: title,
-                    address: address,
-                    lng: r.point.lng,
-                    lat: r.point.lat
-                });
-            });
-            mkUser.setLabel(lblUser);
-            map.addOverlay(mkUser);
-            map.panTo(r.point);
-            mkUser.enableDragging();
+            var divOut = document.createElement("div");
+            divOut.appendChild(document.createTextNode("－"));
+            divOut.style.cursor = "pointer";
+            divOut.style.border = "1px solid gray";
+            divOut.style.fontSize = "60px";
+            divOut.style.backgroundColor = "white";
+            divOut.onclick = function (e) {
+                if (map.getZoom() > 14) {
+                    map.setZoom(map.getZoom() - 1);
+                }
+            };
 
-            mkUser.addEventListener("dragend", function (e) {
-                let geoc = new BMap.Geocoder();
-                geoc.getLocation(e.point, function (rs) {
-                    let addComp = rs.addressComponents;
-                    let address = addComp.province + "," + addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
-                    let title = addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
-                    sessionStorage.beginLocation = JSON.stringify({
-                        title: title,
-                        address: address,
-                        lng: e.point.lng,
-                        lat: e.point.lat
-                    });
-                    sessionStorage.endLocation = JSON.stringify({
-                        title: title,
-                        address: address,
-                        lng: e.point.lng,
-                        lat: e.point.lat
-                    });
-                });
-            });
+            var div = document.createElement("div");
+            div.appendChild(divIn);
+            div.appendChild(divOut);
 
-            var mkCars = [];
+            map.getContainer().appendChild(div);
+            return div;
+        };
+        var myZoomCtrl = new ZoomControl();
+        map.addControl(myZoomCtrl);
 
-            //nearby cars refresh by per 3s
-            mapIntervalId = setInterval(()=> {
-                Repo.DriverNear(orderType, r.point.lng + '', r.point.lat + '', (res)=> {
-                    //console.log('DriverNear', Repo.getDescByCode(res.code));
-                    //console.log('ServiceType', orderType);
-                    if (res.data) {
-                        if (res.data.list) {
-                            //console.log('DriverNear', res.data.list);
-                            mkCars.forEach((car)=> {
-                                map.removeOverlay(car);
-                            });
+        function GeoControl() {
+            this.defaultAnchor = BMAP_ANCHOR_TOP_RIGHT;
+            this.defaultOffset = new BMap.Size(10, 10);
+        }
 
-                            res.data.list.forEach((info)=> {
-                                let car = new BMap.Marker(new BMap.Point(info.longitude, info.latitude), {icon: carIcon});
-                                mkCars.push(car);
-                                map.addOverlay(car);
-                                //car.enableDragging();
-                            });
-                        }
-                    }
-                });
-            }, 3000);
-        });
+        GeoControl.prototype = new BMap.Control();
+        GeoControl.prototype.initialize = function (map) {
+            var div = document.createElement("div");
+            div.appendChild(document.createTextNode("我的位置"));
+            div.style.cursor = "pointer";
+            div.style.border = "1px solid gray";
+            div.style.backgroundColor = "white";
+            div.onclick = function (e) {
+                _this.updateLocation(orderType);
+            };
+            map.getContainer().appendChild(div);
+            return div;
+        };
+        var myGeoCtrl = new GeoControl();
+        map.addControl(myGeoCtrl);
 
-        geolocationControl.addEventListener("locationError", function (e) {
-            alert("定位失败，请打开GPS权限");
-        });
-
-        map.addControl(geolocationControl);
         map.minZoom = 14;
         map.maxZoom = 20;
         map.enableScrollWheelZoom();
@@ -161,7 +130,82 @@ var Map = React.createClass({
         myCity.get(myFun);
 
         setTimeout(()=> {
-            geolocationControl.location();
+            Repo.CurrentLocation((r)=> {
+                let myPoint = new BMap.Point(r.point.lng, r.point.lat);
+                map.setCenter(myPoint);
+                map.setZoom(18);
+
+                var lblUser = new BMap.Label("所在位置", {offset: new BMap.Size(20, -10)});
+                let mkUser = new BMap.Marker(myPoint, {icon: flagIcon});
+                let geoc = new BMap.Geocoder();
+                geoc.getLocation(myPoint, function (rs) {
+                    let addComp = rs.addressComponents;
+                    let address = addComp.province + "," + addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
+                    let title = addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
+                    sessionStorage.beginLocation = JSON.stringify({
+                        title: title,
+                        address: address,
+                        lng: myPoint.lng,
+                        lat: myPoint.lat
+                    });
+                    sessionStorage.endLocation = JSON.stringify({
+                        title: title,
+                        address: address,
+                        lng: myPoint.lng,
+                        lat: myPoint.lat
+                    });
+                });
+                mkUser.setLabel(lblUser);
+                map.addOverlay(mkUser);
+                map.panTo(myPoint);
+                mkUser.enableDragging();
+
+                mkUser.addEventListener("dragend", function (e) {
+                    let geoc = new BMap.Geocoder();
+                    geoc.getLocation(e.point, function (rs) {
+                        let addComp = rs.addressComponents;
+                        let address = addComp.province + "," + addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
+                        let title = addComp.city + "," + addComp.district + "," + addComp.street + "," + addComp.streetNumber;
+                        sessionStorage.beginLocation = JSON.stringify({
+                            title: title,
+                            address: address,
+                            lng: e.point.lng,
+                            lat: e.point.lat
+                        });
+                        sessionStorage.endLocation = JSON.stringify({
+                            title: title,
+                            address: address,
+                            lng: e.point.lng,
+                            lat: e.point.lat
+                        });
+                    });
+                });
+
+                var mkCars = [];
+
+                //nearby cars refresh by per 3s
+                mapIntervalId = setInterval(()=> {
+                    Repo.DriverNear(orderType, myPoint.lng + '', myPoint.lat + '', (res)=> {
+                        //console.log('DriverNear', Repo.getDescByCode(res.code));
+                        //console.log('ServiceType', orderType);
+                        if (res.data) {
+                            if (res.data.list) {
+                                //console.log('DriverNear', res.data.list);
+                                mkCars.forEach((car)=> {
+                                    map.removeOverlay(car);
+                                });
+
+                                res.data.list.forEach((info)=> {
+                                    let car = new BMap.Marker(new BMap.Point(info.longitude, info.latitude), {icon: carIcon});
+                                    mkCars.push(car);
+                                    map.addOverlay(car);
+                                    //car.enableDragging();
+                                });
+                            }
+                        }
+                    });
+                }, 3000);
+            });
         }, 1000);
     },
     render() {

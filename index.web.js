@@ -26,10 +26,10 @@ import Login from './modules/Login';
          this.updateLoginState();
      },
      doSignup(){
-        this.updateLoginState();
+         this.updateLoginState();
      },
      doLogout(){
-        this.clearLoginState();
+         this.clearLoginState();
      },
      componentDidMount(){
          /*
