@@ -34,8 +34,56 @@ function getIPLocation(callback) {
                     point: {
                         lng: point.x,
                         lat: point.y
+                        //lng: 113.556322,
+                        //lat: 22.262887
                     }
                 });
+            },
+            error: function (data) {
+                alert(JSON.stringify(data));
+            }
+        }
+    );
+}
+
+function getAdjustLocation(lng,lat,callback) {
+    $.ajax(
+        {
+            url: 'http://ditujiupian.com/service/api.ashx',
+            data: {
+                key: 'dec36968155d471ea3a86fbcd146ff93',
+                type: 'wgs2bd',
+                lng: lng,
+                lat: lat
+            },
+            type: 'get',
+            dataType: 'jsonp',
+            async: true,
+            success: function (data) {
+                callback(data);
+            },
+            error: function (data) {
+                alert(JSON.stringify(data));
+            }
+        }
+    );
+}
+
+function getAdjustLocation1(lng,lat,callback) {
+    $.ajax(
+        {
+            url: 'http://api.map.baidu.com/geoconv/v1/',
+            data: {
+                coords: lng + ',' + lat,
+                ak: 'Ef8TxBy4vKujFnhsIPUGVCQ1LI5G2dQj',
+                from: 1,
+                to: 5
+            },
+            type: 'get',
+            dataType: 'jsonp',
+            async: true,
+            success: function (data) {
+                callback({Lng: data.result[0].x, Lat: data.result[0].y});
             },
             error: function (data) {
                 alert(JSON.stringify(data));
@@ -371,5 +419,8 @@ module.exports = ({
     },
     CurrentLocation:(callback)=> {
         getIPLocation(callback);
+    },
+    GetAdjustLocation:(lng,lat,callback)=> {
+        getAdjustLocation1(lng, lat, callback);
     }
 });

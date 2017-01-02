@@ -129,9 +129,20 @@ var Map = React.createClass({
         var myCity = new BMap.LocalCity();
         myCity.get(myFun);
 
-        setTimeout(()=> {
-            Repo.CurrentLocation((r)=> {
-                let myPoint = new BMap.Point(r.point.lng, r.point.lat);
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            }
+            else {
+                alert("该浏览器不支持获取地理位置。");
+            }
+        }
+
+        function showPosition(position) {
+            let lat = position.coords.latitude;
+            let lng = position.coords.longitude;
+            Repo.GetAdjustLocation(lng, lat, (r)=> {
+                let myPoint = new BMap.Point(r.Lng, r.Lat);
                 map.setCenter(myPoint);
                 map.setZoom(18);
 
@@ -205,8 +216,29 @@ var Map = React.createClass({
                         }
                     });
                 }, 3000);
-            });
-        }, 1000);
+            })
+        }
+
+        function showError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("用户拒绝对获取地理位置的请求。");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("位置信息是不可用的。");
+                    break;
+                case error.TIMEOUT:
+                    alert("请求用户地理位置超时。");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("未知错误。");
+                    break;
+            }
+        }
+
+        setTimeout(()=> {
+            getLocation();
+        }, 100);
     },
     render() {
         return <div id={this.state.id} style={{height:"100%",width:"100%"}}></div>
