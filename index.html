@@ -58,7 +58,6 @@
   <!--<script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=0a32182edcc6eda8450b3d3826b8f671"></script>-->
   <!--<script type="text/javascript" src="http://cache.amap.com/lbs/static/addToolbar.js"></script>-->
   <!--AMap Ref End-->
-
   <link rel="stylesheet" href="index.css"/>
   <!--<link rel="stylesheet" href="dist/index.css"/>-->
   <style type="text/css">
@@ -87,6 +86,21 @@
 <script src="index.js"></script>
 <!--<script src="dist/common.js"></script>-->
 <!--<script src="dist/index.js"></script>-->
+<iframe id="geoPage" width="100%" height="30%" frameborder=0 scrolling="no" style="display: none;"
+        src="https://apis.map.qq.com/tools/geolocation?key=5W7BZ-NHQR4-WPTUT-DIZUM-WVESF-P2FRX&referer=myapp&effect=zoom"></iframe>
+<script type="text/JavaScript">
+  var loc;
+  //监听定位组件的message事件
+  window.addEventListener('message', function(event) {
+    loc = event.data; // 接收位置信息
+    console.log('location', loc);
+    if (loc && loc.module == 'geolocation') {
+      sessionStorage.point = JSON.stringify(loc);
+    } else {
+      alert('定位失败');
+    }
+  }, false);
+</script>
 </body>
 </html>
 

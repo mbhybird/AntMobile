@@ -76,7 +76,7 @@ function getAdjustLocation1(lng,lat,callback) {
             data: {
                 coords: lng + ',' + lat,
                 ak: 'Ef8TxBy4vKujFnhsIPUGVCQ1LI5G2dQj',
-                from: 1,
+                from: 3,
                 to: 5
             },
             type: 'get',

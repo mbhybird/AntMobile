@@ -130,17 +130,24 @@ var Map = React.createClass({
         myCity.get(myFun);
 
         function getLocation() {
+            document.getElementById("geoPage").contentWindow.postMessage('getLocation', '*');
+            /*
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition, showError);
             }
             else {
                 alert("该浏览器不支持获取地理位置。");
-            }
+            }*/
+            setTimeout(()=> {
+                if(sessionStorage.point) {
+                    showPosition(JSON.parse(sessionStorage.point));
+                }
+            }, 1000);
         }
 
         function showPosition(position) {
-            let lat = position.coords.latitude;
-            let lng = position.coords.longitude;
+            let lat = position.lat;//position.coords.latitude;
+            let lng = position.lng;//position.coords.longitude;
             Repo.GetAdjustLocation(lng, lat, (r)=> {
                 let myPoint = new BMap.Point(r.Lng, r.Lat);
                 map.setCenter(myPoint);
