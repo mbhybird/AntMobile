@@ -105,7 +105,8 @@ const URL=({
     CommentOrder: 'http://120.25.150.132/gvparkpark/order/comment',
     RejectOrder: 'http://120.25.150.132/gvparkpark/order/rejectcomplete',
     CancelOrder: 'http://120.25.150.132/gvparkpark/order/cancel',
-    DriverPrice: 'http://120.25.150.132/gvparkpark/driverprice/query'
+    DriverPrice: 'http://120.25.150.132/gvparkpark/driverprice/query',
+    InComplete: 'http://120.25.150.132/gvparkpark/order/incomplete'
 });
 
 const ORDER_TYPE=({
@@ -233,6 +234,12 @@ const getDescByCode = (code)=> {
             break;
         case '332':
             desc = '拒绝完成订单失败';
+            break;
+        case '333':
+            desc = '该用户有未完成的订单';
+            break;
+        case '334':
+            desc = '该用户没有未完成的订单';
             break;
         case '400':
             desc = '參數錯誤，拒絕訪問';
@@ -422,5 +429,14 @@ module.exports = ({
     },
     GetAdjustLocation:(lng,lat,callback)=> {
         getAdjustLocation1(lng, lat, callback);
+    },
+    InComplete: (code, token, callback)=> {
+        var data = {
+            tag: 1,
+            code: code,
+            token: token
+        };
+
+        postURL(URL.InComplete, data, callback);
     }
 });

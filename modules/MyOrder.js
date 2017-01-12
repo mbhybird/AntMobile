@@ -4,11 +4,13 @@
 import React from 'react';
 import { Card, WhiteSpace,List,Steps,WingBlank,Stepper,Button,InputItem,Flex } from 'antd-mobile';
 const Repo = require("./Repo.js");
+import OrderMap from './OrderMap';
 
 const Item = List.Item;
 const Step = Steps.Step;
 const Icon = ({ type }) => <span className={`anticon anticon-${type}`} />;
 var intervalId;
+var objStatus = null;
 
 const PlaceHolder = (props) => (
     <div style={{
@@ -42,6 +44,7 @@ let MyOrder = React.createClass({
         this.setState({ remark });
     },
     requestData(){
+        var _this = this;
         let pageIndex = 1;
         var params = {page: pageIndex + ''};
         let profile = localStorage.user != null ? JSON.parse(localStorage.user) : {};
@@ -57,6 +60,10 @@ let MyOrder = React.createClass({
                     if (res.data && res.data.list) {
                         //console.log('OrderList', res.data.list);
                         this.setState({dataSource: res.data.list[0], loading: false});
+                        //update map location
+                        let lng = res.data.list[0].driver_longitude;
+                        let lat = res.data.list[0].driver_latitude;
+                        _this.refs.oMap.updateLocation(lng, lat);
                     }
                     else {
                         this.setState({loading: false});
@@ -157,8 +164,14 @@ let MyOrder = React.createClass({
     render(){
         let obj = this.state.dataSource;
         if (obj) {
+            let curStatus = Repo.getOrderStateDesc(obj.status);
+            if(objStatus != curStatus) {
+                alert('订单状态：' + curStatus);
+                objStatus = curStatus;
+            }
             return (
                 <div>
+                    <OrderMap id="orderMap" ref={'oMap'}/>
                     <List renderHeader={''} renderFooter={''}>
                         {/*<Item>订单编号：{obj.order_no}</Item>*/}
                         <Item>订单类型：{Repo.getOrderTypeDesc(obj.order_type)}</Item>
@@ -195,7 +208,17 @@ let MyOrder = React.createClass({
                                 </Flex>
                             </Item>
                             : ''}
-                        {obj.status == 6 && obj.is_user_comment == 0 ? <Item><Flex><Stepper showNumber max={5} min={1} value={this.state.score} onChange={this.onScoreChange}/><InputItem placeholder={"请在此输入备注"} value={this.state.remark} onChange={this.onRemarkChange}>备注：</InputItem></Flex></Item> : ''}
+                        {obj.status == 6 && obj.is_user_comment == 0 ?
+                            <Item>
+                                <Flex>
+                                    <Stepper showNumber max={5} min={1} value={this.state.score} onChange={this.onScoreChange}/>
+                                    <InputItem placeholder={"请在此输入备注"} value={this.state.remark} onChange={this.onRemarkChange}>备注：</InputItem>
+                                </Flex>
+                                <Flex>
+                                    <StarComp star={this.state.score}/>
+                                </Flex>
+                            </Item>
+                            : ''}
                         {obj.status == 6 ?
                             obj.is_user_comment == 0 ?
                                 <Item><Button type="primary"
@@ -226,6 +249,25 @@ let MyOrder = React.createClass({
                 </List>
             );
         }
+    }
+});
+
+let StarComp = React.createClass({
+    render(){
+        var starOn = "<img src='http://112.74.129.174/gvpark/icon_star_on.png'/>";
+        var starOff = "<img src='http://112.74.129.174/gvpark/icon_star_off.png'/>";
+        var onCount = this.props.star;
+        var offCount = 5 - onCount;
+        var ph = [];
+        for (var i = 0; i < onCount; i++) {
+            ph.push(starOn);
+        }
+
+        for (var j = 0; j < offCount; j++) {
+            ph.push(starOff);
+        }
+
+        return  <div dangerouslySetInnerHTML = {{__html:ph.join("")}}/>;
     }
 });
 

@@ -52,10 +52,39 @@ const BottomTabBar = React.createClass({
             hidden: true
         };
     },
-    changeSelectedTab(key){
-        this.setState({
-            selectedTab: key
+    componentDidMount(){
+        let profile = localStorage.user != null ? JSON.parse(localStorage.user) : {};
+        Repo.InComplete(profile.code, profile.token, (res)=> {
+            if (res.code == 333) {
+                //unfinished order
+                this.changeSelectedTab('cur_order');
+            }
+            else if (res.code == 334) {
+                //finished
+            }
         });
+    },
+    changeSelectedTab(key){
+        if (key == 'call_service') {
+            let profile = localStorage.user != null ? JSON.parse(localStorage.user) : {};
+            Repo.InComplete(profile.code, profile.token, (res)=> {
+                if (res.code == 333) {
+                    //unfinished order
+                    key = 'cur_order';
+                }
+                else if (res.code == 334) {
+                    //finished
+                }
+                this.setState({
+                    selectedTab: key
+                });
+            });
+        }
+        else {
+            this.setState({
+                selectedTab: key
+            });
+        }
     },
     updateLocation(){
         this.refs.st.updateLocation();
@@ -313,11 +342,11 @@ const ServiceTab = React.createClass({
                 Repo.CreateOrder(profile.code, profile.token, {
                     order_type: selectedIndex,
                     start_position: beginLoc.title,
-                    start_longitude: beginLoc.lng + '',
-                    start_latitude: beginLoc.lat + '',
+                    start_longitude: (beginLoc.lng + '').substring(0,11),
+                    start_latitude: (beginLoc.lat + '').substring(0,11),
                     end_position: endLoc.title,
-                    end_longitude: endLoc.lng + '',
-                    end_latitude: endLoc.lat + '',
+                    end_longitude: (endLoc.lng + '').substring(0,11),
+                    end_latitude: (endLoc.lat + '').substring(0,11),
                     amount: 0,
                     remark: ''
                 }, (res)=> {

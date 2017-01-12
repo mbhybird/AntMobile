@@ -101,9 +101,10 @@ const OrderListContent = React.createClass({
                     </Flex>
                     }
                     renderFooter={() =>
-                        {/*<Flex>
-                            <Flex.Item><PlaceHolder/></Flex.Item>
-                        </Flex>*/}
+                    <Flex>
+                        <Button type="warning" onClick={this.loadMore} style={{margin:2}}>查询更多</Button>
+                        <Button type="warning" onClick={this.refresh} style={{margin:2}}>刷新</Button>
+                    </Flex>
                     }>
                     {this.state.dataSource.map((item, index) => {
                         return (<List.Item key={index}
