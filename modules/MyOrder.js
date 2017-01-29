@@ -24,6 +24,18 @@ const PlaceHolder = (props) => (
         ></div>
 );
 
+const PlaceHolder1 = (props) => (
+    <div style={{
+    backgroundColor: '#ffffff',
+    color: '#ffffff',
+    textAlign: 'center',
+    height: '0.6rem',
+    lineHeight: '0.6rem',
+    width: '30%'
+  }} {...props}
+        ></div>
+);
+
 let MyOrder = React.createClass({
     getInitialState(){
         return {
@@ -212,10 +224,9 @@ let MyOrder = React.createClass({
                             <Item>
                                 <Flex>
                                     <Stepper showNumber max={5} min={1} value={this.state.score} onChange={this.onScoreChange}/>
-                                    <InputItem placeholder={"请在此输入备注"} value={this.state.remark} onChange={this.onRemarkChange}>备注：</InputItem>
-                                </Flex>
-                                <Flex>
+                                    <PlaceHolder/>
                                     <StarComp star={this.state.score}/>
+                                    <PlaceHolder1/>
                                 </Flex>
                             </Item>
                             : ''}

@@ -142,6 +142,9 @@ var Map = React.createClass({
                 if(sessionStorage.point) {
                     showPosition(JSON.parse(sessionStorage.point));
                 }
+                else{
+                    getLocation();
+                }
             }, 1000);
         }
 
